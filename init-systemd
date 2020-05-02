@@ -1,0 +1,61 @@
+
+#!/bin/bash
+# Copyright 2020 (c) Ayane Satomi
+# Licensed under MIT
+# Parts of this code is based from https://forum.snapcraft.io/t/running-snaps-on-wsl2-insiders-only-for-now/13033
+set -eo pipefail
+
+# I ran out of ideas here so feel free to do some weird lettering shit that matches this more
+while getopts ":u:c" o; do
+    case "${o}" in
+        u)
+            user=${OPTARG}
+            user_exists=$(id -u user > /dev/null 2>&1; echo $?)
+            ;;
+        c)
+            exec_command=${OPTARG}
+            ;;
+        *)
+            echo "Usage: $0 -u (USER) -c (command)"
+            echo "This script spawns a namespace to be able to use systemd in a specified user."
+            echo "This requires unshare (from util-linux) and daemonize (available on debian/ubuntu)."
+            echo "If -c is provided, the command will be executed in the namespace's context non-interactively."
+            exit 1;
+            ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+# variable to check if we already have a systemd session running
+SYSTEMD_PID="$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk '{print $2}')"
+
+
+# Required checks: Obviously we're looking for
+#   * root
+#   * unshare 
+#   * daemonize
+#   * a existing user based on what was provided.
+if [ ! $(whoami) == "root" ]; then echo "Must run as root!"; exit 1; fi 
+if [ -z $(which unshare) ]; then echo "util-linux is not installed!"; exit 1; fi 
+if [ -z $(which daemonize) ]; then echo "daemonize is not installed!"; exit 1; fi
+if [ -z $(which nsenter) ]; then echo "nsenter is not installed!"; exit 1; fi
+if [ "$user_exists" == 0  ]; echo "Cannot proceed, user does not exist!"; exit 127; fi
+
+
+
+# We want to spawn a namespace but not spawn anymore if it exists already.
+if [ -z "$SYSTEMD_PID" ]; then
+    /usr/sbin/daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target
+    while [ -z "$SYSTEMD_PID" ]; do
+        SYSTEMD_PID="$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk '{print $2}')"
+    done
+fi
+
+if [ -z "$exec_command" ]; then
+    # The idea here is we want to preserve WSL's PWD so we don't need to walk manually back to the directory.
+    # So when "bash" is typed on PowerShell, the experience is seamless - it behaves similarly and the directory is already walked for your convinience.
+    /usr/bin/nsenter -t "$SYSTEMD_PID" -m -p su "$user" - sh -c 'cd $PWD; exec "${SHELL:-sh}"'
+else 
+    /usr/bin/nsenter -t "$SYSTEMD_PID" -m -p su "$user" - sh -c "cd $PWD; exec $exec_command";
+fi
