@@ -37,12 +37,43 @@ If you have them all, congrats! You're ready to use this.
 Usage
 ----
 
+The standard way
+-----
+
 ```
 Usage: ./init-systemd -u (USER) -c (command)
 This script spawns a namespace to be able to use systemd in a specified user.
 This requires unshare (from util-linux) and daemonize (available on debian/ubuntu).
 If -c is provided, the command will be executed in the namespace's context non-interactively.
 ````
+
+Execute during login
+-----
+
+It's very much possible to execute this during login. However, I am not responsible if you can't log in normally in your system if something breaks.
+
+**Setting the sudoers**
+
+First of all is setting the sudoers so it can be executed by root without any hitches.
+
+```sh
+# Change this to where your init-systemd is.
+%sudo ALL=(ALL) NOPASSWD: /usr/sbin/init-systemd
+```
+
+Then finally, let's edit `/etc/bash.bashrc`
+
+```sh
+/usr/sbin/init-systemd -u 1000
+```
+Now your system should enter the namespace whenever a interactive session is opened.
+
+Limitations
+---
+
+* Currently we can't kill the namespaces properly, so your `ps` tree might show multiple instances of `unshare`. That's going to be fixed soon once I figured out how to share only ONE systemd namespace instead of spawning another.
+
+* namespaces can't be killed for some reason. That's under investigation since even `SIGKILL` does not terminate a unshare namespace.
 
 Contrbuting
 ---
