@@ -1,0 +1,17 @@
+name: Execution Test Workflow
+
+on: [push , pull_request]
+
+jobs: 
+  test:
+     name: Install deps and run
+     runs-on: ubuntu-latest
+     steps:
+
+        - uses: actions/checkout@master 
+
+        - name: Setup Environment
+          run: sudo apt-get update && sudo apt-get install -y util-linux daemonize
+      
+        - name: Run Command (Non-interactive)
+          run: ./init-systemd -u $(whoami) -c "echo 'hello world'"
