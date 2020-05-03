@@ -14,4 +14,4 @@ jobs:
           run: sudo apt-get update && sudo apt-get install -y util-linux daemonize
       
         - name: Run Command (Non-interactive)
-          run: ./init-systemd -u $(whoami) -c "echo 'hello world'"
+          run: sudo ./init-systemd -u 1000 -c "echo 'hello world'"
