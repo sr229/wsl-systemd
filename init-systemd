@@ -8,7 +8,7 @@ set -eo pipefail
 if [ -z "$1" ]; then 
     echo "Usage: $0 -u (USER) -c (command)"
     echo "This script spawns a namespace to be able to use systemd in a specified user."
-    echo "This requires unshare (from util-linux) and daemonize (available on debian/ubuntu)."
+    echo "This requires unshare (from util-linux)."
     echo "If -c is provided, the command will be executed in the namespace's context non-interactively."
     exit 1;
 fi 
@@ -25,7 +25,7 @@ while getopts ":u:c:" o; do
         *)
             echo "Usage: $0 -u (USER) -c (command)"
             echo "This script spawns a namespace to be able to use systemd in a specified user."
-            echo "This requires unshare (from util-linux) and daemonize (available on debian/ubuntu)."
+            echo "This requires unshare (from util-linux)."
             echo "If -c is provided, the command will be executed in the namespace's context non-interactively."
             exit 1;
             ;;
