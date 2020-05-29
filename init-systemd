@@ -49,9 +49,7 @@ if [ "$user_exists" -eq  1  ]; then echo "Cannot proceed, user does not exist!";
 SYSTEMD_PID=$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk 'NR==1{print $2}')
 if [ -z "$SYSTEMD_PID" ]; then
         unshare --kill-child --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target <&- &
-    while [ -z "$SYSTEMD_PID" ]; do
         SYSTEMD_PID=$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk 'NR==1{print $2}')
-    done
 fi
 
 if [ -n "$exec_command" ]; then
