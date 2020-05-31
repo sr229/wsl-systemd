@@ -46,10 +46,10 @@ if [ "$user_exists" -eq  1  ]; then echo "Cannot proceed, user does not exist!";
 
 
 # We want to spawn a namespace but not spawn anymore if it exists already.
-SYSTEMD_PID=$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk 'NR==1{print $2}')
+SYSTEMD_PID=$(ps -eo pid=,args= | awk '$2=="/lib/systemd/systemd" && $3=="--system-unit=basic.target" {print $1}')
 if [ -z "$SYSTEMD_PID" ]; then
         unshare --kill-child --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target <&- &
-        SYSTEMD_PID=$(ps -ef | grep '/lib/systemd/systemd --system-unit=basic.target$' | grep -v unshare | awk 'NR==1{print $2}')
+        SYSTEMD_PID=$(ps -eo pid=,args= | awk '$2=="/lib/systemd/systemd" && $3=="--system-unit=basic.target" {print $1}')
 fi
 
 if [ -n "$exec_command" ]; then
